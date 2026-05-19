@@ -18,13 +18,23 @@ function getRssMB(): number {
   return process.memoryUsage().rss / 1024 / 1024
 }
 
+function getHeapMB(): { used: number; total: number; external: number } {
+  const usage = process.memoryUsage()
+  return {
+    used: usage.heapUsed / 1024 / 1024,
+    total: usage.heapTotal / 1024 / 1024,
+    external: usage.external / 1024 / 1024,
+  }
+}
+
 let baselineRss = 0
 
 function logRss(phase: string, details?: string) {
   const current = getRssMB()
   const delta = current - baselineRss
   const deltaStr = delta >= 0 ? `+${delta.toFixed(1)}` : delta.toFixed(1)
-  const msg = `[${phase.padEnd(28)}] RSS: ${current.toFixed(1).padStart(7)} MB (${deltaStr} MB)`
+  const heap = getHeapMB()
+  const msg = `[${phase.padEnd(28)}] RSS: ${current.toFixed(1).padStart(7)} MB (${deltaStr} MB)  heap: ${heap.used.toFixed(1)}/${heap.total.toFixed(1)} MB  ext: ${heap.external.toFixed(1)} MB`
   console.log(details ? `${msg}  ${details}` : msg)
 }
 
