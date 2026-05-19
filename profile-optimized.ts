@@ -102,6 +102,7 @@ async function profile() {
   logRss('after gc()')
 
   const delta = postGetEntries - preGetEntries
+  const serializedSize = (await import('node:v8')).serialize(decoded).byteLength
 
   console.log('\n' + '='.repeat(60))
   console.log('  SUMMARY')
@@ -111,6 +112,7 @@ async function profile() {
   console.log(`  Total entries:           ${decoded.length}`)
   console.log(`  Manual decode RSS delta: ${delta.toFixed(1)} MB`)
   console.log(`  Per-entry overhead:      ~${((delta * 1024) / decoded.length).toFixed(1)} KB`)
+  console.log(`  Serialized result size:  ${(serializedSize / 1024 / 1024).toFixed(1)} MB`)
   console.log('='.repeat(60))
 
   client.destroy()
