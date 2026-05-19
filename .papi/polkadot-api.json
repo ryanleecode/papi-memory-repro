@@ -1,0 +1,9 @@
+{
+  "version": 0,
+  "descriptorPath": ".papi/descriptors",
+  "entries": {
+    "paseo_people": {
+      "wsUrl": "wss://paseo-people-next-rpc.polkadot.io"
+    }
+  }
+}
