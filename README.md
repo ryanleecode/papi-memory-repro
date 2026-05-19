@@ -8,9 +8,9 @@ The root cause is `keys.dec()` in `storage.js` line 159. It's called inside a sy
 
 ```js
 const decodedValues = values.map(({ key, value }) => ({
-  keyArgs: codecs.keys.dec(key),   // ← ~57 KB of transient allocations per key
-  value: codecs.value.dec(value)
-}));
+  keyArgs: codecs.keys.dec(key), // ← ~57 KB of transient allocations per key
+  value: codecs.value.dec(value),
+}))
 ```
 
 Each `keys.dec()` call allocates ~57 KB of V8 objects to decode an 81-byte SCALE key (a single `AccountId32`). The allocation chain includes:
@@ -85,15 +85,3 @@ Fetching Resources.Consumers with manual key decode...
 - Node.js: 24+
 - Chain: Paseo People (`wss://paseo-people-next-rpc.polkadot.io`)
 - Storage: `Resources.Consumers` (~37k entries, Blake2_128Concat hasher, single `AccountId32` key)
-
-## Impact
-
-Any daemon or service that periodically calls `getEntries()` on a storage map with tens of thousands of entries will see multi-GB RSS spikes. For our username indexer, this causes 100-200 MB spikes every 5 minutes on a pod with a 512 MB memory limit, triggering OOM kills.
-
-## Suggested improvements
-
-1. **Eliminate `codec.enc(result[i]).length` round-trip in `dynamic-builder.js`**: The hasher and key type sizes are known at build time. Re-encoding just to measure byte length is unnecessary.
-
-2. **Batch or yield during `keys.dec()` in `getEntries()`**: The synchronous `.map()` prevents GC from reclaiming transient allocations across 37k entries.
-
-3. **Reduce intermediate allocations in key decoding**: Each `fromHex` → `toInternalBytes` creates multiple wrapper objects that could be pooled or avoided.
